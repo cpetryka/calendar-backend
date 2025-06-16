@@ -1,7 +1,7 @@
 package com.app.calendarbackend.persistence.json.serializer.generic;
 
-import com.app.json.converter.JsonConverter;
-import com.app.json.serializer.JsonSerializer;
+import com.app.calendarbackend.persistence.json.converter.JsonConverter;
+import com.app.calendarbackend.persistence.json.serializer.JsonSerializer;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
