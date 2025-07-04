@@ -1,4 +1,4 @@
-package com.app.calendarbackend.persistence.dto;
+package com.app.calendarbackend.dto;
 
 import java.time.LocalDate;
 
