@@ -59,38 +59,50 @@ public class UploadsController {
     }
 
     /**
-     * Endpoint to upload a file.
+     * Endpoint to upload a file for a specific date.
      * POST /api/uploads/uploadFile
-     * Request Body: { "file": <file>, "forDate": "YYYY-MM-DD", "uploadAuthor": "Author Name" }
-     * @param uploadFileDto DTO containing file and metadata.
+     * @param file The file to upload.
+     * @param forDateStr The date for which the file is uploaded, in YYYY-MM-DD format.
+     * @param uploadAuthor The author of the upload.
      * @return ResponseEntity with ResponseDto indicating success or error.
      */
     @PostMapping("/uploadFile")
     public ResponseEntity<ResponseDto<String>> uploadFile(
-        @RequestBody UploadFileDto uploadFileDto) {
+        @RequestParam("file") MultipartFile file,
+        @RequestParam("forDate") String forDateStr,
+        @RequestParam("uploadAuthor") String uploadAuthor) {
 
-        if (uploadRepository.containsUpload(uploadFileDto.forDate())) {
+        LocalDate forDate = LocalDate.parse(forDateStr);
+
+        if (uploadRepository.containsUpload(forDate)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ResponseDto<>("Upload already exists for date: " + uploadFileDto.forDate()));
+                .body(new ResponseDto<>("Upload already exists for date: " + forDate));
         }
 
         try {
-            String uploadDir = "uploads/";
-            Files.createDirectories(Paths.get(uploadDir)); // Create a folder if it doesn't exist
-            String filename = uploadFileDto.file().getOriginalFilename();
-            Path filepath = Paths.get(uploadDir, filename);
-            Files.write(filepath, uploadFileDto.file().getBytes());
+            String baseUploadDir = "uploads";
+            String dateFolder = forDate.toString(); // np. "2025-07-04"
+            Path uploadDirPath = Paths.get(baseUploadDir, dateFolder);
 
-            // Save to repository
-            uploadRepository.addUpload(new AddUploadDto(uploadFileDto.forDate(), uploadFileDto.uploadAuthor(), filepath.toString()));
+            Files.createDirectories(uploadDirPath);
+
+            String filename = file.getOriginalFilename();
+            Path filepath = uploadDirPath.resolve(filename);
+
+            Files.write(filepath, file.getBytes());
+
+            // Save to repo
+            uploadRepository.addUpload(new AddUploadDto(forDate, uploadAuthor, filepath.toString()));
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ResponseDto<>("File uploaded and saved successfully for date: " + uploadFileDto.forDate()));
+                .body(new ResponseDto<>("File uploaded and saved successfully for date: " + forDate));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ResponseDto<>("Failed to upload file: " + e.getMessage()));
         }
     }
+
+
 
     /**
      * Endpoint to get all uploads.
